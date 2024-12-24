@@ -107,4 +107,34 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, updateUser, deleteUser };
+const upgradePlan = async (req, res) => {
+  try {
+    const { plan } = req.body;
+
+    const allowedPlans = ["Standard", "Gold", "Platinum"];
+    if (!allowedPlans.includes(plan)) {
+      return res.status(400).json({ message: "Invalid plan selected" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.plan === plan) {
+      return res.status(400).json({ message: "You are already on this plan" });
+    }
+
+    user.plan = plan;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ message: "Plan upgraded successfully", plan: user.plan });
+  } catch (error) {
+    res.status(500).json({ message: "Error upgrading plan", error });
+  }
+};
+
+module.exports = { signup, login, updateUser, deleteUser, upgradePlan };

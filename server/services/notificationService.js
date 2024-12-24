@@ -1,13 +1,18 @@
+const Notification = require("../models/notificationModel");
+
 const notifySubscribers = async (business, message) => {
+  console.log(`Notification: ${message}`);
+
+  const notifications = business.subscribers.map((subscriberId) => ({
+    userId: subscriberId,
+    message,
+  }));
+
   try {
-    business.subscribers.forEach((subscriberId) => {
-      console.log(
-        `Notification sent to subscriber ${subscriberId}: ${message}`
-      );
-    });
+    await Notification.insertMany(notifications);
+    console.log("Notifications saved to the database.");
   } catch (error) {
-    console.error("Error in notifySubscribers:", error);
-    throw error;
+    console.error("Error saving notifications:", error);
   }
 };
 

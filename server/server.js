@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 
 const userRoutes = require("./routes/userRoutes");
 const businessRoutes = require("./routes/businessRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +25,9 @@ app.use("/users", userRoutes);
 
 //use busindes routes
 app.use("/businesses", businessRoutes);
+
+// Use reviews routs
+app.use("/reviews", reviewRoutes);
 
 // Start server
 app.listen(PORT, () => {
