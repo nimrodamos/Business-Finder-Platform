@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const cors = require("cors");
 
 const userRoutes = require("./routes/userRoutes");
 const businessRoutes = require("./routes/businessRoutes");
@@ -14,6 +15,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+
+app.use(cors());
 
 // Basic route
 app.get("/", (req, res) => {
