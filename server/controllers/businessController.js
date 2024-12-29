@@ -45,21 +45,37 @@ const createBusiness = async (req, res) => {
 
 const getBusinesses = async (req, res) => {
   try {
-    const { name, description, ownerName } = req.query;
+    const {
+      id,
+      name,
+      description,
+      ownerName,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    // Query object for filtering
+    // Handle search by ID
+    if (id) {
+      try {
+        const business = await Business.findById(id).populate(
+          "owner",
+          "name email"
+        );
+        if (!business) {
+          return res.status(404).json({ message: "Business not found" });
+        }
+        return res
+          .status(200)
+          .json({ message: "Business retrieved successfully", business });
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: "Error retrieving business by ID", error });
+      }
+    }
+
+    // Build the query object for filtering
     const query = {};
-
-    /*
-    הסבר:
-  query: Object containing conditions for filtering the database.
-  If the "name" parameter exists:
-  - Use $regex to perform a "partial" search in the "name" field.
-  - $options: "i" ensures the search is case-insensitive.
-
-  If the "description" parameter exists:
-  - The same logic as "name" applies, but for the "description" field.
-*/
 
     if (name) {
       query.name = { $regex: name, $options: "i" }; // Case-insensitive search
@@ -69,20 +85,36 @@ const getBusinesses = async (req, res) => {
       query.description = { $regex: description, $options: "i" }; // Case-insensitive search
     }
 
-    // Fetch businesses with optional filtering
-    let businesses = await Business.find(query).populate("owner", "name email");
-
-    // Filter by owner's name if provided
+    // Optimize filtering by owner's name
     if (ownerName) {
-      const ownerRegex = new RegExp(ownerName, "i");
-      businesses = businesses.filter((business) =>
-        ownerRegex.test(business.owner.name)
+      const owners = await User.find(
+        { name: { $regex: ownerName, $options: "i" } },
+        "_id"
       );
+      query.owner = { $in: owners.map((owner) => owner._id) };
     }
 
-    res
-      .status(200)
-      .json({ message: "Businesses retrieved successfully", businesses });
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Fetch businesses with filtering and pagination
+    const businesses = await Business.find(query)
+      .populate("owner", "name email")
+      .skip(skip)
+      .limit(Number(limit));
+
+    // Fetch total count for pagination metadata
+    const total = await Business.countDocuments(query);
+
+    res.status(200).json({
+      message: "Businesses retrieved successfully",
+      businesses,
+      pagination: {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Error retrieving businesses", error });
   }

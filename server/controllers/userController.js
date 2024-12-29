@@ -11,6 +11,7 @@ const signup = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
+
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -21,7 +22,24 @@ const signup = async (req, res) => {
       password: hashedPassword,
       plan,
     });
-    res.status(201).json({ message: "User created successfully", user });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, plan: user.plan },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(201).json({
+      message: "User created successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        plan: user.plan,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Error signing up", error });
   }
@@ -42,6 +60,7 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
     // Create JWT token
     const token = jwt.sign(
       { id: user._id, email: user.email, plan: user.plan },
@@ -49,7 +68,15 @@ const login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.status(200).json({ message: "Login successful", token });
+    // Return response with user details and token
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      plan: user.plan,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error });
   }

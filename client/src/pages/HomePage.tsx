@@ -1,40 +1,53 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { api } from "@/api/api";
+import { Business } from "@/types/business";
+import BusinessCard from "@/components/BusinessCard";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const handleCardClick = (id: string) => {
+    navigate(`/businesses/${id}`);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBusinesses = async () => {
       try {
-        const response = await api.get("/businesses"); // שים לב להתאים את הנתיב לשרת שלך
-        setData(response.data.businesses || []);
+        const response = await api.get("/businesses");
+        setBusinesses(response.data.businesses || []);
       } catch (err) {
-        setError("Failed to fetch data.");
+        setError("Failed to load businesses.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchBusinesses();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Businesses</h1>
-      <ul className="space-y-2">
-        {data.map((business) => (
-          <li key={business._id} className="border p-4 rounded-md">
-            <h2 className="text-lg font-semibold">{business.name}</h2>
-            <p>{business.description}</p>
-          </li>
+      <h1 className="text-primary text-3xl font-bold mb-4">Businesses</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {businesses.map((business) => (
+          <div key={business._id} onClick={() => handleCardClick(business._id)}>
+            <BusinessCard
+              key={business._id}
+              name={business.name}
+              description={business.description}
+              category={business.category}
+              subscribersCount={business.subscribers.length}
+            />
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

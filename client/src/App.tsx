@@ -1,15 +1,22 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
+import BusinessPage from "./pages/BusinessPage";
+import Navbar from "./components/Navbar";
+import ProfilePage from "./pages/ProfilePage";
+import { UserProvider } from "./context/userContext";
 
 const App = () => {
   return (
-    <Router>
-      <div className="min-h-screen bg-background text-foreground">
+    <UserProvider>
+      <Router>
+        <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/businesses/:id" element={<BusinessPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
-      </div>
-    </Router>
+      </Router>
+    </UserProvider>
   );
 };
 
