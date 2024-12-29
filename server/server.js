@@ -16,7 +16,12 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // דומיין ה-Frontend שלך
+    credentials: true, // מאפשר שליחת קוקיז
+  })
+);
 
 // Basic route
 app.get("/", (req, res) => {

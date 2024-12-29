@@ -132,6 +132,27 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getLoggedUser = async (req, res) => {
+  try {
+    if (!req.user || !req.user.userId) {
+      return res
+        .status(400)
+        .json({ message: "User not authenticated or missing userId." });
+    }
+
+    const { userId } = req.user;
+    console.log("Logged in user ID:", userId);
+    const user = await User.findById(userId);
+
+    res.status(200).json(user);
+  } catch (err) {
+    console.error("Error in getLoggedUser:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error.", error: err.message });
+  }
+};
+
 const upgradePlan = async (req, res) => {
   try {
     const { plan } = req.body;
@@ -162,4 +183,11 @@ const upgradePlan = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, updateUser, deleteUser, upgradePlan };
+module.exports = {
+  signup,
+  login,
+  updateUser,
+  deleteUser,
+  upgradePlan,
+  getLoggedUser,
+};

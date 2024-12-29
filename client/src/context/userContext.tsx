@@ -1,57 +1,79 @@
-import { User } from "@/types/User";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
-// Interface for Context state
-interface UserContextProps {
+import { User } from "@/types/User";
+import { api } from "@/api/api";
+
+interface UserContextType {
   user: User | null;
-  login: (userData: User) => void;
-  logout: () => void;
   isLoggedIn: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+    plan: string
+  ) => Promise<void>;
 }
 
-// Create Context
-const UserContext = createContext<UserContextProps | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Provider Component
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+type UserProviderProps = {
+  children: React.ReactNode;
+};
 
-  // Save user to localStorage when updated
+export const UserProvider = ({ children }: UserProviderProps) => {
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("user");
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      setIsLoggedIn(true);
     }
-  }, [user]);
+  }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem("authToken", userData.token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    console.log("Context user after login:", user);
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await api.post("/users/login", { email, password });
+      const userData = response.data;
+
+      setUser(userData);
+      setIsLoggedIn(true);
+      localStorage.setItem("user", JSON.stringify(userData));
+    } catch (error) {
+      console.error("Error during login:", error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    setIsLoggedIn(false);
+    localStorage.removeItem("user");
   };
 
-  const isLoggedIn = !!user;
+  const signup = async (name: string, email: string, password: string) => {
+    try {
+      await api.post("/users/signup", { name, email, password });
+
+      // אחרי הרשמה, התחבר אוטומטית עם הנתונים שסופקו
+      await login(email, password);
+    } catch (error) {
+      console.error("Error during signup:", error);
+      throw error;
+    }
+  };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, isLoggedIn }}>
+    <UserContext.Provider value={{ user, isLoggedIn, login, logout, signup }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// Hook to use UserContext
-export const useUser = (): UserContextProps => {
+export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {
     throw new Error("useUser must be used within a UserProvider");

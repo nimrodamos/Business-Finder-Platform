@@ -1,53 +1,29 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { useUser } from "@/context/userContext";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { signup } from "@/api/auth";
-import { User } from "@/types/User";
+import { SignupDialogProps } from "@/types/Signup";
 
-interface SignupModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (userData: User) => void;
-}
-
-const SignupModal = ({ isOpen, onClose, onSuccess }: SignupModalProps) => {
+const SignupDialog: React.FC<SignupDialogProps> = ({ isOpen, onClose }) => {
+  const { signup } = useUser();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [plan, setPlan] = useState("Standard");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async () => {
     try {
-      // קריאה ל-API להרשמה
-      const response = await signup({ name, email, password });
-
-      // פירוק הערכים מהתשובה
-      const { id, token, name: userName, email: userEmail } = response;
-
-      // יצירת אובייקט משתמש
-      const userData: User = { id, name: userName, email: userEmail, token };
-
-      // עדכון ה-Context דרך onSuccess
-      onSuccess(userData);
-
-      // איפוס שדות הטופס
-      setName("");
-      setEmail("");
-      setPassword("");
-      setError(null);
-
-      // סגירת המודל
-      onClose();
+      await signup(name, email, password, plan);
+      onClose(); // Close dialog on successful signup
     } catch (err) {
-      setError("Failed to Signup. Please check your credentials.");
+      setError("Error signing up. Please try again.");
     }
   };
 
@@ -57,40 +33,77 @@ const SignupModal = ({ isOpen, onClose, onSuccess }: SignupModalProps) => {
         <DialogHeader>
           <DialogTitle>Signup</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="name"
-            placeholder="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <DialogFooter>
-            <Button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-opacity-90"
+        <div className="space-y-4">
+          {error && <p className="text-red-500">{error}</p>}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+              placeholder="Enter your name"
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+              placeholder="Enter your email"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+              placeholder="Enter your password"
+            />
+          </div>
+          <div>
+            <label htmlFor="plan" className="block text-sm font-medium">
+              Plan
+            </label>
+            <select
+              id="plan"
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
             >
-              Signup
-            </Button>
-          </DialogFooter>
-        </form>
+              <option value="Standard">Standard</option>
+              <option value="Gold">Gold</option>
+              <option value="Platinum">Platinum</option>
+            </select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={onClose} className="bg-muted text-muted-foreground">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSignup}
+            className="bg-primary text-primary-foreground"
+          >
+            Signup
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default SignupModal;
+export default SignupDialog;

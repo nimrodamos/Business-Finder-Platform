@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import LoginModal from "@/components/LoginModal";
-import { Button } from "./ui/button";
-import { useUser } from "@/context/userContext";
 import { useState } from "react";
+import LoginDialog from "./LoginModal";
+import SignupDialog from "./SignupModal";
+import { Button } from "@/components/ui/button";
+import { useUser } from "@/context/userContext";
+import { useTheme } from "@/context/Theme-provider";
 import { FiSun, FiMoon } from "react-icons/fi";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,13 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/context/Theme-provider";
 import { Switch } from "@radix-ui/react-switch";
-import { User } from "@/types/User";
 
 function Navbar() {
   const { user, login, logout, isLoggedIn } = useUser();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -38,6 +38,7 @@ function Navbar() {
         </li>
       </ul>
 
+      {/* כפתורים למשתמש */}
       <div className="flex items-center gap-4">
         {isLoggedIn ? (
           <>
@@ -59,23 +60,30 @@ function Navbar() {
             </DropdownMenu>
           </>
         ) : (
-          <Button
-            onClick={() => setIsLoginOpen(true)}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-opacity-90"
-          >
-            Login
-          </Button>
+          <>
+            <Button
+              onClick={() => setIsLoginOpen(true)}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-opacity-90"
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => setIsSignupOpen(true)}
+              className="bg-secondary text-secondary-foreground px-4 py-2 rounded hover:bg-secondary-foreground hover:text-secondary"
+            >
+              Signup
+            </Button>
+          </>
         )}
-        <LoginModal
+        <LoginDialog
           isOpen={isLoginOpen}
           onClose={() => setIsLoginOpen(false)}
-          onSuccess={(userData: User) => {
-            console.log("UserData received:", userData);
-            login(userData);
-            console.log("Context user after login:", userData);
-            setIsLoginOpen(false);
-          }}
         />
+        <SignupDialog
+          isOpen={isSignupOpen}
+          onClose={() => setIsSignupOpen(false)}
+        />
+        {/* שינוי נושא */}
         <div className="flex items-center gap-2">
           <Switch
             checked={theme === "dark"}

@@ -5,6 +5,7 @@ const {
   deleteUser,
   updateUser,
   upgradePlan,
+  getLoggedUser,
 } = require("../controllers/userController");
 const authenticate = require("../middleware/auth");
 
@@ -20,6 +21,8 @@ router.post("/login", login);
 router.get("/profile", authenticate, (req, res) => {
   res.status(200).json({ message: "Profile data", user: req.user });
 });
+
+router.get("/me", authenticate, getLoggedUser);
 
 // Upgrade plan route
 router.put("/upgrade", authenticate, upgradePlan);

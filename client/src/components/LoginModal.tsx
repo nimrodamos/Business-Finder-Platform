@@ -1,31 +1,27 @@
-import { useState } from "react";
-import { login } from "@/api/auth";
+import React, { useState } from "react";
+import { useUser } from "@/context/userContext";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { LoginModalProps } from "@/types/login";
+import { LoginDialogProps } from "@/types/login";
 
-const LoginModal = ({ isOpen, onClose, onLogin }: LoginModalProps) => {
+const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
+  const { login } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     try {
-      onLogin(email, password); // Passing the data to Context
-      setEmail("");
-      setPassword("");
-      setError(null);
-      onClose();
+      await login(email, password);
+      onClose(); // Close dialog on successful login
     } catch (err) {
-      setError("Failed to login. Please check your credentials.");
+      setError("Invalid email or password");
     }
   };
 
@@ -35,34 +31,49 @@ const LoginModal = ({ isOpen, onClose, onLogin }: LoginModalProps) => {
         <DialogHeader>
           <DialogTitle>Login</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <DialogFooter>
-            <Button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-opacity-90"
-            >
-              Login
-            </Button>
-          </DialogFooter>
-        </form>
+        <div className="space-y-4">
+          {error && <p className="text-red-500">{error}</p>}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+              placeholder="Enter your email"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+              placeholder="Enter your password"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={onClose} className="bg-muted text-muted-foreground">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleLogin}
+            className="bg-primary text-primary-foreground"
+          >
+            Login
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default LoginModal;
+export default LoginDialog;

@@ -1,4 +1,4 @@
-export interface LoginDialogProps {
+export interface SignupDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
